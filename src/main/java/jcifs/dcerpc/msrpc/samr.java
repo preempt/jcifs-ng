@@ -8,6 +8,11 @@ import jcifs.dcerpc.rpc;
 import jcifs.dcerpc.ndr.NdrBuffer;
 import jcifs.dcerpc.ndr.NdrException;
 import jcifs.dcerpc.ndr.NdrObject;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
+import java.util.ArrayList;
+import java.util.function.Supplier;
 
 
 @Generated ( "midlc" )
@@ -300,6 +305,296 @@ public class samr {
         }
     }
 
+    public static class SAMPR_LOGON_HOURS extends NdrObject
+    {
+        public int unitsPerWeek;
+        public int logonHours;
+
+
+        @Override
+        public void encode(NdrBuffer _dst)
+        {
+            _dst.align(4);
+            _dst.enc_ndr_short(this.unitsPerWeek);
+            _dst.enc_ndr_long(this.logonHours);
+        }
+
+        @Override
+        public void decode(NdrBuffer _src)
+        {
+            _src.align(4);
+            this.unitsPerWeek = _src.dec_ndr_short();
+            this.logonHours = _src.dec_ndr_long();
+        }
+    }
+
+    public static class OLD_LARGE_INTEGER extends NdrObject
+    {
+        public int lowPart;
+        public int highPart;
+        private static final long TICKS_PER_MILLISECOND = 10000;
+        private static final DateTime AD_LDAP_START_DATE = new DateTime(1601, 1, 1, 0, 0, DateTimeZone.UTC);
+
+
+        @Override
+        public void encode(NdrBuffer _dst)
+        {
+            _dst.align(4);
+            _dst.enc_ndr_long(this.lowPart);
+            _dst.enc_ndr_long(this.highPart);
+        }
+
+        @Override
+        public void decode(NdrBuffer _src)
+        {
+            _src.align(4);
+            this.lowPart = _src.dec_ndr_long();
+            this.highPart = _src.dec_ndr_long();
+        }
+
+        public DateTime toDate()
+        {
+            if (lowPart < 0)
+                lowPart = -lowPart;
+            if (highPart < 0)
+                highPart = -highPart;
+            long ticksSince1601 = lowPart;
+            ticksSince1601 |= ((long) highPart) << 32;
+            long MSSince1601 = ticksSince1601 / TICKS_PER_MILLISECOND;
+
+            DateTime date = AD_LDAP_START_DATE.plus(MSSince1601);
+            return date;
+        }
+    }
+
+    public static class SAMPR_USER_LOGON_INFORMATION extends NdrObject
+    {
+
+        public rpc.unicode_string userName;
+        public rpc.unicode_string fullName;
+        public int userId;
+        public int primaryGroupId;
+        public rpc.unicode_string homeDirectory;
+        public rpc.unicode_string homeDirectoryDrive;
+        public rpc.unicode_string scriptPath;
+        public rpc.unicode_string profilePath;
+        public rpc.unicode_string workStations;
+        public OLD_LARGE_INTEGER LastLogon;
+        public OLD_LARGE_INTEGER LastLogoff;
+        public OLD_LARGE_INTEGER PasswordLastSet;
+        public OLD_LARGE_INTEGER PasswordCanChange;
+        public OLD_LARGE_INTEGER PasswordMustChange;
+        public SAMPR_LOGON_HOURS LogonHours;
+        public int BadPasswordCount;
+        public int LogonCount;
+        public int UserAccountControl;
+
+        public ArrayList<ArrayList<Integer>> variablesMD = new ArrayList<>();
+
+        @Override
+        public void encode(NdrBuffer _dst)
+        {
+            //Need to implement.
+        }
+
+
+        @Override
+        public void decode(NdrBuffer _src) throws NdrException
+        {
+            decodeHeadersAndSimpleTypes(_src);
+            decodeDeepTypes(_src);
+        }
+
+        private void decodeDeepTypes(NdrBuffer _src) throws NdrException
+        {
+            int variableIndex = 0;
+            decodeUnicodeString(_src, userName, variableIndex++);
+            decodeUnicodeString(_src, fullName, variableIndex++);
+            decodeUnicodeString(_src, homeDirectory, variableIndex++);
+            decodeUnicodeString(_src, homeDirectoryDrive, variableIndex++);
+            decodeUnicodeString(_src, scriptPath, variableIndex++);
+            decodeUnicodeString(_src, profilePath, variableIndex++);
+            decodeUnicodeString(_src, workStations, variableIndex++);
+            decodeLogonHours(_src, LogonHours, variableIndex);
+        }
+
+        public void decodeHeadersAndSimpleTypes(NdrBuffer _src)
+        {
+            _src.align(4);
+            //decode info request type
+            _src.dec_ndr_long();
+            userName = decodeUnicodeStringHeader(_src, userName);
+            fullName = decodeUnicodeStringHeader(_src, fullName);
+            userId = _src.dec_ndr_long();
+            primaryGroupId = _src.dec_ndr_long();
+            homeDirectory = decodeUnicodeStringHeader(_src, homeDirectory);
+            homeDirectoryDrive = decodeUnicodeStringHeader(_src, homeDirectoryDrive);
+            scriptPath = decodeUnicodeStringHeader(_src, scriptPath);
+            profilePath = decodeUnicodeStringHeader(_src, profilePath);
+            workStations = decodeUnicodeStringHeader(_src, workStations);
+            LastLogon = decodeOldLargeInteger(_src, LastLogon);
+            LastLogoff = decodeOldLargeInteger(_src, LastLogoff);
+            PasswordLastSet = decodeOldLargeInteger(_src, PasswordLastSet);
+            PasswordCanChange = decodeOldLargeInteger(_src, PasswordCanChange);
+            PasswordMustChange = decodeOldLargeInteger(_src, PasswordMustChange);
+            LogonHours = decodeLogonHoursHeader(_src, LogonHours);
+            BadPasswordCount = _src.dec_ndr_short();
+            LogonCount = _src.dec_ndr_short();
+            UserAccountControl = _src.dec_ndr_long();
+        }
+
+        private SAMPR_LOGON_HOURS decodeLogonHoursHeader(NdrBuffer _src, SAMPR_LOGON_HOURS logonHours)
+        {
+            _src.align(4);
+            if (logonHours == null)
+            {
+                logonHours = new SAMPR_LOGON_HOURS();
+            }
+            logonHours.unitsPerWeek = _src.dec_ndr_short();
+            ArrayList<Integer> currentVariableMD = new ArrayList<>();
+            int variableReferentId = _src.dec_ndr_long();
+            currentVariableMD.add(variableReferentId);
+            variablesMD.add(currentVariableMD);
+
+            return logonHours;
+        }
+
+        public rpc.unicode_string decodeUnicodeStringHeader(NdrBuffer _src, rpc.unicode_string stringToDecode)
+        {
+            _src.align(4);
+            if (stringToDecode == null)
+            {
+                stringToDecode = new rpc.unicode_string();
+            }
+            stringToDecode.length = (short) _src.dec_ndr_short();
+            stringToDecode.maximum_length = (short) _src.dec_ndr_short();
+            ArrayList<Integer> currentVariableMD = new ArrayList<>();
+            int variableReferentId = _src.dec_ndr_long();
+            currentVariableMD.add(variableReferentId);
+            variablesMD.add(currentVariableMD);
+
+            return stringToDecode;
+        }
+
+        public void decodeUnicodeString(NdrBuffer _src, rpc.unicode_string stringToDecode, int variableIndex) throws NdrException
+        {
+            Integer referentId = variablesMD.get(variableIndex).get(0);
+            if (referentId != 0)
+            {
+                _src = _src.deferred;
+                int max_length = _src.dec_ndr_long();
+                //offset
+                _src.dec_ndr_long();
+                int actual_length = _src.dec_ndr_long();
+                int text_start_index = _src.index;
+                _src.advance(2 * actual_length);
+
+                if (stringToDecode.buffer == null)
+                {
+                    if (max_length < 0 || max_length > 0xFFFF)
+                        throw new NdrException(NdrException.INVALID_CONFORMANCE);
+                    stringToDecode.buffer = new short[max_length];
+                }
+                _src = _src.derive(text_start_index);
+                for (int _i = 0; _i < actual_length; _i++)
+                {
+                    stringToDecode.buffer[_i] = (short) _src.dec_ndr_short();
+                }
+            }
+        }
+
+        public static OLD_LARGE_INTEGER decodeOldLargeInteger(NdrBuffer _src, OLD_LARGE_INTEGER oldLargeInteger)
+        {
+            if (oldLargeInteger == null)
+            {
+                oldLargeInteger = new OLD_LARGE_INTEGER();
+            }
+            oldLargeInteger.decode(_src);
+
+            return oldLargeInteger;
+        }
+
+        public static void decodeLogonHours(NdrBuffer _src, SAMPR_LOGON_HOURS logonHours, int variableIndex)
+        {
+            //Need to implement
+        }
+
+        public boolean isAccountEnabled()
+        {
+            //If the flag is on it's disabled.
+            return (UserAccountControl & 1) == 0;
+        }
+    }
+
+    public static class USER_CONTROL_INFORMATION extends NdrObject
+    {
+        public int userAccountControl;
+
+        @Override
+        public void encode(NdrBuffer _dst)
+        {
+            //Need to implement
+        }
+
+        @Override
+        public void decode(NdrBuffer _src)
+        {
+            _src.align(4);
+            //Referent Id
+            _src.dec_ndr_long();
+            userAccountControl = _src.dec_ndr_long();
+        }
+
+        public boolean isAccountEnabled()
+        {
+            //If the flag is on it's disabled.
+            return (userAccountControl & 1) == 0;
+        }
+    }
+
+    public static class SamrQueryInformationUser2<SAMPR_INFORMATION_TYPE extends NdrObject> extends DcerpcMessage
+    {
+        public int retval;
+        public rpc.policy_handle handle;
+        public SAMPR_INFORMATION_TYPE info;
+        public int queryType;
+        private Supplier<SAMPR_INFORMATION_TYPE> typeSupplier;
+
+
+        public int getOpnum()
+        {
+            return 0x2F;
+        }
+
+        public SamrQueryInformationUser2(rpc.policy_handle handle, int queryType, Supplier<SAMPR_INFORMATION_TYPE> typeSupplier)
+        {
+            this.handle = handle;
+            this.queryType = queryType;
+            this.typeSupplier = typeSupplier;
+            ptype = 0;
+        }
+
+        public void encode_in(NdrBuffer _dst) throws NdrException
+        {
+            handle.encode(_dst);
+            _dst.enc_ndr_long(queryType);
+        }
+
+        public void decode_out(NdrBuffer _src) throws NdrException
+        {
+            int _samp = _src.dec_ndr_long();
+            if (_samp != 0)
+            {
+                if (info == null)
+                {
+                    info = typeSupplier.get();
+                }
+                info.decode(_src);
+            }
+            retval = _src.dec_ndr_long();
+        }
+    }
+
     public static class SamrEnumerateAliasesInDomain extends DcerpcMessage {
 
         @Override
@@ -349,6 +644,53 @@ public class samr {
         }
     }
 
+    public static class SamrEnumerateDomainsInSamServer extends DcerpcMessage
+    {
+
+        public int getOpnum()
+        {
+            return 0x06;
+        }
+
+        public int retval;
+        public SamrPolicyHandle handle;
+        public samr.SamrSamArray sam;
+        public int resume_handle;
+        public int acct_flags;
+        public int num_entries;
+
+
+        public SamrEnumerateDomainsInSamServer(SamrPolicyHandle handle, int resume_handle)
+        {
+            this.handle = handle;
+            this.resume_handle = resume_handle;
+            ptype = 0;
+        }
+
+        public void encode_in(NdrBuffer _dst) throws NdrException
+        {
+            handle.encode(_dst);
+            _dst.enc_ndr_long(resume_handle);
+            _dst.enc_ndr_long(acct_flags);
+        }
+
+        public void decode_out(NdrBuffer _src) throws NdrException
+        {
+            resume_handle = _src.dec_ndr_long();
+            int _samp = _src.dec_ndr_long();
+            if (_samp != 0)
+            {
+                if (sam == null)
+                {
+                    sam = new samr.SamrSamArray();
+                }
+                sam.decode(_src);
+            }
+            num_entries = _src.dec_ndr_long();
+            retval = _src.dec_ndr_long();
+        }
+    }
+
     public static class SamrOpenAlias extends DcerpcMessage {
 
         @Override
@@ -383,6 +725,237 @@ public class samr {
         public void decode_out ( NdrBuffer _src ) throws NdrException {
             this.alias_handle.decode(_src);
             this.retval = _src.dec_ndr_long();
+        }
+    }
+
+    public static class SamrEnumerateGroupsInDomain extends DcerpcMessage
+    {
+        public int retval;
+        public SamrDomainHandle handle;
+        public int resume_handle;
+        public samr.SamrSamArray sam;
+        public int acct_flags;
+        public int num_entries;
+
+
+        public int getOpnum()
+        {
+            return 0x0b;
+        }
+
+        public SamrEnumerateGroupsInDomain(SamrDomainHandle handle, int resume_handle)
+        {
+            this.handle = handle;
+            this.resume_handle = resume_handle;
+            ptype = 0;
+        }
+
+        public void encode_in(NdrBuffer _dst) throws NdrException
+        {
+            handle.encode(_dst);
+            _dst.enc_ndr_long(resume_handle);
+            _dst.enc_ndr_long(acct_flags);
+        }
+
+        public void decode_out(NdrBuffer _src) throws NdrException
+        {
+            resume_handle = _src.dec_ndr_long();
+            int _samp = _src.dec_ndr_long();
+            if (_samp != 0)
+            {
+                if (sam == null)
+                {
+                    sam = new samr.SamrSamArray();
+                }
+                sam.decode(_src);
+
+            }
+            num_entries = _src.dec_ndr_long();
+            retval = _src.dec_ndr_long();
+        }
+    }
+
+    public static class SamrOpenGroup extends DcerpcMessage
+    {
+        public int retval;
+        public SamrDomainHandle handle;
+        public int access;
+        public int group_id;
+        public rpc.policy_handle group_handle;
+
+        public int getOpnum()
+        {
+            return 0x13;
+        }
+
+        public SamrOpenGroup(SamrDomainHandle handle, int access, int group_id)
+        {
+            this.handle = handle;
+            this.access = access;
+            this.group_id = group_id;
+            this.group_handle = new rpc.policy_handle();
+            ptype = 0;
+        }
+
+        public void encode_in(NdrBuffer _dst) throws NdrException
+        {
+            handle.encode(_dst);
+            _dst.enc_ndr_long(access);
+            _dst.enc_ndr_long(group_id);
+        }
+
+        public void decode_out(NdrBuffer _src) throws NdrException
+        {
+            this.group_handle.decode(_src);
+            this.retval = _src.dec_ndr_long();
+        }
+    }
+
+    public static class SamrOpenUser extends DcerpcMessage
+    {
+        public int retval;
+        public SamrDomainHandle handle;
+        public int access;
+        public int user_id;
+        public rpc.policy_handle user_handle = new rpc.policy_handle();
+
+        public int getOpnum()
+        {
+            return 0x22;
+        }
+
+        public SamrOpenUser(SamrDomainHandle handle, int access, int user_id)
+        {
+            this.handle = handle;
+            this.access = access;
+            this.user_id = user_id;
+            ptype = 0;
+        }
+
+        public void encode_in(NdrBuffer _dst) throws NdrException
+        {
+            handle.encode(_dst);
+            _dst.enc_ndr_long(access);
+            _dst.enc_ndr_long(user_id);
+        }
+
+        public void decode_out(NdrBuffer _src) throws NdrException
+        {
+            this.user_handle.decode(_src);
+            this.retval = _src.dec_ndr_long();
+        }
+    }
+
+    public static class SamrEnumerateUsersInDomain extends DcerpcMessage
+    {
+        public int retval;
+        public SamrPolicyHandle handle;
+        public int resume_handle;
+        public int userAccountControl = 4;
+        public samr.SamrSamArray sam;
+        public int acct_flags;
+        public int num_entries;
+
+
+        public int getOpnum()
+        {
+            return 0x0d;
+        }
+
+        public SamrEnumerateUsersInDomain(SamrPolicyHandle handle, int resume_handle)
+        {
+            this.handle = handle;
+            this.resume_handle = resume_handle;
+            ptype = 0;
+        }
+
+        public void encode_in(NdrBuffer _dst) throws NdrException
+        {
+            handle.encode(_dst);
+            _dst.enc_ndr_long(resume_handle);
+            _dst.enc_ndr_long(userAccountControl);
+            _dst.enc_ndr_long(acct_flags);
+        }
+
+        public void decode_out(NdrBuffer _src) throws NdrException
+        {
+            resume_handle = _src.dec_ndr_long();
+            int _samp = _src.dec_ndr_long();
+            if (_samp != 0)
+            {
+                if (sam == null)
+                {
+                    sam = new samr.SamrSamArray();
+                }
+                sam.decode(_src);
+
+            }
+            num_entries = _src.dec_ndr_long();
+            retval = _src.dec_ndr_long();
+        }
+    }
+
+
+    public static class SamrLookupDomainInSamServer extends DcerpcMessage
+    {
+
+        public int retval;
+        public SamrPolicyHandle handle;
+        public rpc.unicode_string name;
+        //out
+        public rpc.sid_t domainId;
+
+        public int getOpnum()
+        {
+            return 0x05;
+        }
+
+        public SamrLookupDomainInSamServer(SamrPolicyHandle handle, rpc.unicode_string name)
+        {
+            this.handle = handle;
+            this.name = name;
+            ptype = 0;
+        }
+
+        public void encode_in(NdrBuffer _dst) throws NdrException
+        {
+            handle.encode(_dst);
+            _dst.enc_ndr_short(name.length);
+            _dst.enc_ndr_short(name.maximum_length);
+            _dst.enc_ndr_referent(name.buffer, 1);
+
+            if (name.buffer != null)
+            {
+                _dst = _dst.deferred;
+                int _dns_domain_bufferl = name.length / 2;
+                int _dns_domain_buffers = name.maximum_length / 2;
+                _dst.enc_ndr_long(_dns_domain_buffers);
+                _dst.enc_ndr_long(0);
+                _dst.enc_ndr_long(_dns_domain_bufferl);
+                int _dns_domain_bufferi = _dst.index;
+                _dst.advance(2 * _dns_domain_bufferl);
+
+                _dst = _dst.derive(_dns_domain_bufferi);
+                for (int _i = 0; _i < _dns_domain_bufferl; _i++)
+                {
+                    _dst.enc_ndr_short(name.buffer[_i]);
+                }
+            }
+        }
+
+        public void decode_out(NdrBuffer _src) throws NdrException
+        {
+            int _somainSid = _src.dec_ndr_long();
+            if (_somainSid != 0)
+            {
+                if (domainId == null)
+                {
+                    domainId = new rpc.sid_t();
+                }
+                _src = _src.deferred;
+                domainId.decode(_src);
+            }
+            retval = _src.dec_ndr_long();
         }
     }
 
