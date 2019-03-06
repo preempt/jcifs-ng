@@ -180,6 +180,17 @@ public class rpc {
                 }
             }
         }
+
+        public String toString()
+        {
+            StringBuilder builder = new StringBuilder();
+            for (short letter : buffer)
+            {
+                builder.append((char)letter);
+            }
+
+            return builder.toString();
+        }
     }
 
     public static class sid_t extends NdrObject {
