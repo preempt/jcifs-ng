@@ -41,6 +41,72 @@ public class samr {
     public static final int ACB_USE_DES_KEY_ONLY = 32768;
     public static final int ACB_DONT_REQUIRE_PREAUTH = 65536;
 
+    public static final int SamrServerAccessReadMask = 983103;
+
+    public static class SamrDomainAccessValues
+    {
+        public static final int DOMAIN_READ_PASSWORD_PARAMETERS = 0x00000001;
+        public static final int DOMAIN_WRITE_PASSWORD_PARAMS = 0x00000002;
+        public static final int DOMAIN_READ_OTHER_PARAMETERS = 0x00000004;
+        public static final int DOMAIN_WRITE_OTHER_PARAMETERS = 0x00000008;
+        public static final int DOMAIN_CREATE_USER = 0x00000010;
+        public static final int DOMAIN_CREATE_GROUP = 0x00000020;
+        public static final int DOMAIN_CREATE_ALIAS = 0x00000040;
+        public static final int DOMAIN_GET_ALIAS_MEMBERSHIP = 0x00000080;
+        public static final int DOMAIN_LIST_ACCOUNTS = 0x00000100;
+        public static final int DOMAIN_LOOKUP = 0x00000200;
+        public static final int DOMAIN_ADMINISTER_SERVER = 0x00000400;
+        public static final int DOMAIN_ALL_ACCESS = 0x000F07FF;
+        public static final int DOMAIN_READ = 0x00020084;
+        public static final int DOMAIN_WRITE = 0x0002047A;
+        public static final int DOMAIN_EXECUTE = 0x00020301;
+        public static final int DOMAIN_GENERIC_READ_PERMISSIONS = 0x02000000;
+        public static final int DOMAIN_ALL_READ_PERMISSIONS = DOMAIN_READ_PASSWORD_PARAMETERS
+                                                                | DOMAIN_READ
+                                                                | DOMAIN_GET_ALIAS_MEMBERSHIP
+                                                                | DOMAIN_LIST_ACCOUNTS
+                                                                | DOMAIN_LOOKUP
+                                                                | DOMAIN_READ_OTHER_PARAMETERS
+                                                                | DOMAIN_GENERIC_READ_PERMISSIONS;
+    }
+
+    public static class SamrAliasAccessValues
+    {
+        public static final int ALIAS_LIST_MEMBERS = 0x00000004;
+        public static final int ALIAS_READ_INFORMATION = 0x00000008;
+        public static final int ALIAS_READ = 0x00020004;
+        public static final int ALIAS_ALL_READ_PERMISSIONS = ALIAS_LIST_MEMBERS
+                                                            | ALIAS_READ_INFORMATION
+                                                            | ALIAS_READ;
+    }
+
+    public static class SamrUserAccessValues
+    {
+        public static final int USER_READ_GENERAL = 0x00000001;
+        public static final int USER_READ_PREFERENCES = 0x00000002;
+        public static final int USER_WRITE_PREFERENCES = 0x00000004;
+        public static final int USER_READ_LOGON = 0x00000008;
+        public static final int USER_READ_ACCOUNT = 0x00000010;
+        public static final int USER_WRITE_ACCOUNT = 0x00000020;
+        public static final int USER_CHANGE_PASSWORD = 0x00000040;
+        public static final int USER_FORCE_PASSWORD_CHANGE = 0x00000080;
+        public static final int USER_LIST_GROUPS = 0x00000100;
+        public static final int USER_READ_GROUP_INFORMATION = 0x00000200;
+        public static final int USER_WRITE_GROUP_INFORMATION = 0x00000400;
+        public static final int USER_ALL_ACCESS = 0x000F07FF;
+        public static final int USER_READ = 0x0002031A;
+        public static final int USER_WRITE = 0x00020044;
+        public static final int USER_EXECUTE = 0x00020041;
+        public static final int USER_ALL_READ_PERMISSIONS = USER_READ_GENERAL
+                                                            | USER_READ_PREFERENCES
+                                                            | USER_READ_LOGON
+                                                            | USER_READ_ACCOUNT
+                                                            | USER_LIST_GROUPS
+                                                            | USER_READ_GROUP_INFORMATION
+                                                            | USER_READ
+                                                            | USER_ALL_ACCESS;
+    }
+
     public static class SamrCloseHandle extends DcerpcMessage {
 
         @Override
