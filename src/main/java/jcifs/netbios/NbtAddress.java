@@ -19,13 +19,13 @@
 package jcifs.netbios;
 
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
 import jcifs.Address;
 import jcifs.CIFSContext;
 import jcifs.NetbiosAddress;
 import jcifs.NetbiosName;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 
 /**
@@ -257,7 +257,7 @@ public final class NbtAddress implements NetbiosAddress {
             NetbiosAddress[] addrs;
 
             try {
-                addrs = tc.getNameServiceClient().getNodeStatus(this);
+                addrs = tc.getNameServiceClient().getNodeStatus(this, null).join();
                 if ( this.getNameType() == 0x1D ) {
                     for ( int i = 0; i < addrs.length; i++ ) {
                         if ( addrs[ i ].getNameType() == 0x20 ) {
@@ -275,7 +275,7 @@ public final class NbtAddress implements NetbiosAddress {
                     return getHostName();
                 }
             }
-            catch ( UnknownHostException uhe ) {
+            catch ( UncheckedUnknownHostException uhe ) {
                 this.calledName = null;
             }
         }
@@ -314,16 +314,16 @@ public final class NbtAddress implements NetbiosAddress {
      * in a lazy fashon.
      */
 
-    void checkData ( CIFSContext tc ) throws UnknownHostException {
+    void checkData (CIFSContext tc) throws UnknownHostException {
         if ( this.hostName.isUnknown() ) {
-            tc.getNameServiceClient().getNbtAllByAddress(this);
+            tc.getNameServiceClient().getNbtAllByAddress(this, null).join();
         }
     }
 
 
     void checkNodeStatusData ( CIFSContext tc ) throws UnknownHostException {
         if ( this.isDataFromNodeStatus == false ) {
-            tc.getNameServiceClient().getNbtAllByAddress(this);
+            tc.getNameServiceClient().getNbtAllByAddress(this, null).join();
         }
     }
 

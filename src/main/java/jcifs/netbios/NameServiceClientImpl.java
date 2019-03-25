@@ -19,31 +19,19 @@
 package jcifs.netbios;
 
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import jcifs.*;
+import jcifs.util.Hexdump;
+import jcifs.util.Retrier;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jcifs.CIFSContext;
-import jcifs.Configuration;
-import jcifs.NameServiceClient;
-import jcifs.NetbiosAddress;
-import jcifs.ResolverType;
-import jcifs.RuntimeCIFSException;
-import jcifs.SmbConstants;
-import jcifs.util.Hexdump;
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.io.UncheckedIOException;
+import java.net.*;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 
 /**
@@ -416,35 +404,138 @@ public class NameServiceClientImpl implements Runnable, NameServiceClient {
         }
     }
 
+    private Integer prepareRequestAndResponseForSendAsync(NameServicePacket request, NameServicePacket response, int timeout) throws IOException {
+        synchronized ( this.LOCK ) {
+            request.nameTrnId = getNextNameTrnId();
+            Integer nid = request.nameTrnId;
 
-    void send ( NameServicePacket request, NameServicePacket response, int timeout ) throws IOException {
-        Integer nid = null;
+            this.out.setAddress(request.addr);
+            this.out.setLength(request.writeWireFormat(this.snd_buf, 0));
+            response.received = false;
+
+            this.responseTable.put(nid, response);
+            ensureOpen(timeout + 1000);
+            this.socket.send(this.out);
+
+            if ( log.isTraceEnabled() ) {
+                log.trace(request.toString());
+                log.trace(Hexdump.toHexString(this.snd_buf, 0, this.out.getLength()));
+            }
+
+            return nid;
+        }
+    }
+
+    private boolean prepareNexWINSForRequest(NameServicePacket request)
+    {
+        synchronized ( this.LOCK ) {
+            if (!isWINS(request.addr))
+            {
+                return false;
+            }
+            /*
+             * Message was sent to WINS but
+             * failed to receive response.
+             * Try a different WINS server.
+             */
+            if (request.addr == getWINSAddress())
+            {
+                switchWINS();
+            }
+
+            request.addr = getWINSAddress();
+        }
+
+        return true;
+    }
+
+    int getMaxTries()
+    {
         int max = this.transportContext.getConfig().getWinsServers().length;
 
         if ( max == 0 ) {
             max = 1; /* No WINs, try only bcast addr */
         }
 
+        return max;
+    }
+
+    CompletableFuture<Void> sendAsync (NameServicePacket request, NameServicePacket response, int timeout, Retrier<Boolean> retrier) {
+        return sendAsyncContinuation(request, response, timeout, retrier, getMaxTries());
+    }
+
+    CompletableFuture<Void> sendAsyncContinuation(NameServicePacket request, NameServicePacket response, int timeout, Retrier<Boolean> retrier, int maxTries) {
+
+        if (maxTries <= 0)
+        {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        return CompletableFuture.completedFuture(null).thenCompose(ignored -> {
+            synchronized ( response ) {
+                try
+                {
+                    Integer nid = prepareRequestAndResponseForSendAsync(request, response, timeout);
+                    return retrier.retry(
+                            () -> {
+                                synchronized (response) {
+                                    /*
+                                     * JetDirect printer can respond to regular broadcast query
+                                     * with node status so we need to check to make sure that
+                                     * the record type matches the question type and if not,
+                                     * loop around and try again.
+                                     */
+                                    return (response.received && request.questionType == response.recordType);
+                                }
+                            },
+                            res -> res,
+                            5,
+                            Duration.millis(timeout / 5),
+                            true)
+                            .exceptionally(ex -> {
+                                synchronized (response) {
+                                    this.responseTable.remove(nid);
+                                    if (ex instanceof IOException)
+                                    {
+                                        throw new UncheckedIOException((IOException) ex);
+                                    }
+                                    if (ex instanceof UncheckedIOException)
+                                    {
+                                        throw (UncheckedIOException) ex;
+                                    }
+
+                                    throw new RuntimeException(ex);
+                                }
+                            }).thenCompose(res -> {
+                                synchronized (response) {
+                                    this.responseTable.remove(nid);
+                                    if (res)
+                                    {
+                                        return CompletableFuture.completedFuture(null);
+                                    }
+
+                                    response.received = false;
+                                    prepareNexWINSForRequest(request);
+                                    return sendAsyncContinuation(request, response, timeout, retrier, maxTries - 1);
+                                }
+                            });
+                }
+                catch (IOException ex)
+                {
+                    throw new UncheckedIOException(ex);
+                }
+            }
+        });
+    }
+
+    void send ( NameServicePacket request, NameServicePacket response, int timeout ) throws IOException {
+        Integer nid = null;
+        int max = getMaxTries();
+
         synchronized ( response ) {
             while ( max-- > 0 ) {
                 try {
-                    synchronized ( this.LOCK ) {
-                        request.nameTrnId = getNextNameTrnId();
-                        nid = new Integer(request.nameTrnId);
-
-                        this.out.setAddress(request.addr);
-                        this.out.setLength(request.writeWireFormat(this.snd_buf, 0));
-                        response.received = false;
-
-                        this.responseTable.put(nid, response);
-                        ensureOpen(timeout + 1000);
-                        this.socket.send(this.out);
-
-                        if ( log.isTraceEnabled() ) {
-                            log.trace(request.toString());
-                            log.trace(Hexdump.toHexString(this.snd_buf, 0, this.out.getLength()));
-                        }
-                    }
+                    prepareRequestAndResponseForSendAsync(request, response, timeout);
 
                     long start = System.currentTimeMillis();
                     while ( timeout > 0 ) {
@@ -471,17 +562,9 @@ public class NameServiceClientImpl implements Runnable, NameServiceClient {
                     this.responseTable.remove(nid);
                 }
 
-                synchronized ( this.LOCK ) {
-                    if ( isWINS(request.addr) == false )
-                        break;
-                    /*
-                     * Message was sent to WINS but
-                     * failed to receive response.
-                     * Try a different WINS server.
-                     */
-                    if ( request.addr == getWINSAddress() )
-                        switchWINS();
-                    request.addr = getWINSAddress();
+                if (!prepareNexWINSForRequest(request))
+                {
+                    break;
                 }
             }
         }
@@ -631,22 +714,68 @@ public class NameServiceClientImpl implements Runnable, NameServiceClient {
 
 
     @Override
-    public NbtAddress[] getNodeStatus ( NetbiosAddress addr ) throws UnknownHostException {
-        NodeStatusResponse response = new NodeStatusResponse(this.transportContext.getConfig(), addr.unwrap(NbtAddress.class));
-        NodeStatusRequest request = new NodeStatusRequest(
-            this.transportContext.getConfig(),
-            new Name(this.transportContext.getConfig(), NbtAddress.ANY_HOSTS_NAME, 0x00, null));
-        request.addr = addr.toInetAddress();
+    public CompletableFuture<NetbiosAddress[]> getNodeStatus ( NetbiosAddress addr, Retrier<Boolean> retrier ) {
+        return getNodeStatusInternal(addr, retrier).thenApply(res -> res);
+    }
 
-        int n = this.transportContext.getConfig().getNetbiosRetryCount();
-        while ( n-- > 0 ) {
-            try {
-                send(request, response, this.transportContext.getConfig().getNetbiosRetryTimeout());
+    private CompletableFuture<NbtAddress[]> getNodeStatusInternal ( NetbiosAddress addr, Retrier<Boolean> retrier ) {
+        return CompletableFuture.completedFuture(null).thenCompose(ignored -> {
+            NodeStatusResponse response = new NodeStatusResponse(this.transportContext.getConfig(), addr.unwrap(NbtAddress.class));
+            NodeStatusRequest request = new NodeStatusRequest(
+                    this.transportContext.getConfig(),
+                    new Name(this.transportContext.getConfig(), NbtAddress.ANY_HOSTS_NAME, 0x00, null));
+            try
+            {
+                request.addr = addr.toInetAddress();
             }
-            catch ( IOException ioe ) {
-                log.info("Failed to send node status request for " + addr, ioe);
-                throw new UnknownHostException(addr.toString());
+            catch (UnknownHostException ex)
+            {
+                throw new UncheckedUnknownHostException(ex);
             }
+
+            int n = this.transportContext.getConfig().getNetbiosRetryCount();
+            return getNodeStatusInternalContinuation(addr, request, response, n, retrier);
+        });
+    }
+
+    private CompletableFuture<NbtAddress[]> getNodeStatusInternalContinuation(NetbiosAddress addr, NodeStatusRequest request, NodeStatusResponse response, int retriesLeft, Retrier<Boolean> retrier) {
+        if (retriesLeft <= 0)
+        {
+            CompletableFuture<NbtAddress[]> res = new CompletableFuture<>();
+            res.completeExceptionally(UncheckedUnknownHostException.withChecked(addr.getHostName()));
+
+            return res;
+        }
+
+        CompletableFuture<Void> sendFuture;
+
+        if (retrier != null)
+        {
+            sendFuture = sendAsync(request, response, this.transportContext.getConfig().getNetbiosRetryTimeout(), retrier);
+        }
+        else
+        {
+            sendFuture = CompletableFuture.completedFuture(null).thenRun(() -> {
+                try
+                {
+                    send(request, response, this.transportContext.getConfig().getNetbiosRetryTimeout());
+                }
+                catch (IOException ex)
+                {
+                    throw new UncheckedIOException(ex);
+                }
+            });
+        }
+
+        return sendFuture.exceptionally(ex -> {
+            if (ex instanceof IOException || ex instanceof UncheckedIOException)
+            {
+                log.info("Failed to send node status request for " + addr, ex);
+                throw UncheckedUnknownHostException.withChecked(addr.toString());
+            }
+
+            throw new RuntimeException(ex);
+        }).thenCompose(ignored -> {
             if ( response.received && response.resultCode == 0 ) {
 
                 /*
@@ -667,12 +796,13 @@ public class NameServiceClientImpl implements Runnable, NameServiceClient {
                 for ( int i = 0; i < response.addressArray.length; i++ ) {
                     response.addressArray[ i ].hostName.srcHashCode = srcHashCode;
                 }
-                return response.addressArray;
+                return CompletableFuture.completedFuture(response.addressArray);
             }
-        }
-        throw new UnknownHostException(addr.getHostName());
-    }
 
+            // Try again with one less retry
+            return getNodeStatusInternalContinuation(addr, request, response, retriesLeft - 1, retrier);
+        });
+    }
 
     @Override
     public NbtAddress getNbtByName ( String host ) throws UnknownHostException {
@@ -739,37 +869,43 @@ public class NameServiceClientImpl implements Runnable, NameServiceClient {
 
 
     @Override
-    public NbtAddress[] getNbtAllByAddress ( String host ) throws UnknownHostException {
-        return getNbtAllByAddress(getNbtByName(host, 0x00, null));
+    public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, Retrier<Boolean> retrier ) throws UnknownHostException {
+        return getNbtAllByAddress(getNbtByName(host, 0x00, null), retrier);
     }
 
 
     @Override
-    public NbtAddress[] getNbtAllByAddress ( String host, int type, String scope ) throws UnknownHostException {
-        return getNbtAllByAddress(getNbtByName(host, type, scope));
+    public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, int type, String scope, Retrier<Boolean> retrier ) throws UnknownHostException {
+        return getNbtAllByAddress(getNbtByName(host, type, scope), retrier);
     }
 
 
     @Override
-    public NbtAddress[] getNbtAllByAddress ( NetbiosAddress addr ) throws UnknownHostException {
-        try {
-            NbtAddress[] addrs = getNodeStatus(addr);
+    public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress (NetbiosAddress addr, Retrier<Boolean> retrier) {
+        return getNbtAllByAddressInternal(addr, retrier).thenApply(res -> res);
+    }
+
+    private CompletableFuture<NbtAddress[]> getNbtAllByAddressInternal ( NetbiosAddress addr, Retrier<Boolean> retrier ) {
+
+        return getNodeStatusInternal(addr, retrier).thenApply(addrs -> {
             cacheAddressArray(addrs);
             return addrs;
-        }
-        catch ( UnknownHostException uhe ) {
-            throw new UnknownHostException(
-                "no name with type 0x" + Hexdump.toHexString(addr.getNameType(), 2)
-                        + ( ( ( addr.getName().getScope() == null ) || ( addr.getName().getScope().isEmpty() ) ) ? " with no scope"
+        }).exceptionally(ex -> {
+            if (ex instanceof UnknownHostException || ex instanceof UncheckedUnknownHostException)
+            {
+                throw UncheckedUnknownHostException.withChecked(
+                        "no name with type 0x" + Hexdump.toHexString(addr.getNameType(), 2)
+                                + ( ( ( addr.getName().getScope() == null ) || ( addr.getName().getScope().isEmpty() ) ) ? " with no scope"
                                 : " with scope " + addr.getName().getScope() )
-                        + " for host " + addr.getHostAddress());
-        }
+                                + " for host " + addr.getHostAddress());
+            }
+
+            throw new RuntimeException(ex);
+        });
     }
 
 
     /**
-     * 
-     * @param tc
      * @return address of active WINS server
      */
     protected InetAddress getWINSAddress () {

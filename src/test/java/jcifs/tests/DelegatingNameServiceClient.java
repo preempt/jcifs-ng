@@ -18,13 +18,15 @@
 package jcifs.tests;
 
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
 import jcifs.Address;
 import jcifs.NameServiceClient;
 import jcifs.NetbiosAddress;
 import jcifs.NetbiosName;
+import jcifs.util.Retrier;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.concurrent.CompletableFuture;
 
 
 /**
@@ -52,8 +54,8 @@ public class DelegatingNameServiceClient implements NameServiceClient {
 
 
     @Override
-    public NetbiosAddress[] getNodeStatus ( NetbiosAddress nbtAddress ) throws UnknownHostException {
-        return this.nscl.getNodeStatus(nbtAddress);
+    public CompletableFuture<NetbiosAddress[]> getNodeStatus (NetbiosAddress nbtAddress, Retrier<Boolean> retrier) {
+        return this.nscl.getNodeStatus(nbtAddress, retrier);
     }
 
 
@@ -82,20 +84,20 @@ public class DelegatingNameServiceClient implements NameServiceClient {
 
 
     @Override
-    public NetbiosAddress[] getNbtAllByAddress ( String host ) throws UnknownHostException {
-        return this.nscl.getNbtAllByAddress(host);
+    public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, Retrier<Boolean> retrier ) throws UnknownHostException {
+        return this.nscl.getNbtAllByAddress(host, retrier);
     }
 
 
     @Override
-    public NetbiosAddress[] getNbtAllByAddress ( String host, int type, String scope ) throws UnknownHostException {
-        return this.nscl.getNbtAllByAddress(host, type, scope);
+    public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, int type, String scope, Retrier<Boolean> retrier ) throws UnknownHostException {
+        return this.nscl.getNbtAllByAddress(host, type, scope, retrier);
     }
 
 
     @Override
-    public NetbiosAddress[] getNbtAllByAddress ( NetbiosAddress addr ) throws UnknownHostException {
-        return this.nscl.getNbtAllByAddress(addr);
+    public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( NetbiosAddress addr, Retrier<Boolean> retrier ) throws UnknownHostException {
+        return this.nscl.getNbtAllByAddress(addr, retrier);
     }
 
 
