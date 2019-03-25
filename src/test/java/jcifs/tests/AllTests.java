@@ -18,6 +18,17 @@
 package jcifs.tests;
 
 
+import jcifs.CIFSContext;
+import jcifs.CIFSException;
+import jcifs.config.PropertyConfiguration;
+import jcifs.context.BaseContext;
+import org.junit.AfterClass;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.junit.runners.Suite.SuiteClasses;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.Channels;
@@ -26,26 +37,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
-
-import org.junit.AfterClass;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import jcifs.CIFSContext;
-import jcifs.CIFSException;
-import jcifs.config.PropertyConfiguration;
-import jcifs.context.BaseContext;
 
 
 /**
@@ -54,7 +47,7 @@ import jcifs.context.BaseContext;
  */
 @RunWith ( Suite.class )
 @SuiteClasses ( {
-    ContextConfigTest.class, PACTest.class, NtlmTest.class, FileLocationTest.class, SessionTest.class, KerberosTest.class, TimeoutTest.class,
+    ContextConfigTest.class, PACTest.class, NtlmTest.class, FileLocationTest.class, SessionTest.class, TimeoutTest.class,
     SidTest.class, NamingTest.class, DfsTest.class, FileAttributesTest.class, EnumTest.class, PipeTest.class, FileOperationsTest.class,
     WatchTest.class, ReadWriteTest.class, ConcurrencyTest.class, RandomAccessFileTest.class, OplockTests.class
 } )

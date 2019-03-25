@@ -18,8 +18,11 @@
 package jcifs;
 
 
+import jcifs.util.Retrier;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.concurrent.CompletableFuture;
 
 
 /**
@@ -61,7 +64,7 @@ public interface NameServiceClient {
      * @throws UnknownHostException
      *             if address cannot be resolved
      */
-    NetbiosAddress[] getNbtAllByAddress ( NetbiosAddress addr ) throws UnknownHostException;
+    CompletableFuture<NetbiosAddress[]> getNbtAllByAddress (NetbiosAddress addr, Retrier<Boolean> retrier) throws UnknownHostException;
 
 
     /**
@@ -82,7 +85,7 @@ public interface NameServiceClient {
      * @throws java.net.UnknownHostException
      *             if there is an error resolving the name
      */
-    NetbiosAddress[] getNbtAllByAddress ( String host, int type, String scope ) throws UnknownHostException;
+    CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, int type, String scope, Retrier<Boolean> retrier ) throws UnknownHostException;
 
 
     /**
@@ -97,7 +100,7 @@ public interface NameServiceClient {
      * @throws java.net.UnknownHostException
      *             if there is an error resolving the name
      */
-    NetbiosAddress[] getNbtAllByAddress ( String host ) throws UnknownHostException;
+    CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, Retrier<Boolean> retrier ) throws UnknownHostException;
 
 
     /**
@@ -190,7 +193,7 @@ public interface NameServiceClient {
      * @return the node status responses
      * @throws UnknownHostException
      */
-    NetbiosAddress[] getNodeStatus ( NetbiosAddress nbtAddress ) throws UnknownHostException;
+    CompletableFuture<NetbiosAddress[]> getNodeStatus ( NetbiosAddress nbtAddress, Retrier<Boolean> retrier );
 
 
     /**

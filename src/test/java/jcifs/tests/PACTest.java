@@ -18,24 +18,22 @@
 package jcifs.tests;
 
 
+import jcifs.pac.PACDecodingException;
+import jcifs.pac.PacMac;
+import jcifs.util.Hexdump;
+import org.bouncycastle.util.encoders.Hex;
+import org.junit.Assert;
+import org.junit.Test;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import javax.security.auth.kerberos.KerberosKey;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Locale;
-
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import javax.security.auth.kerberos.KerberosKey;
-
-import org.bouncycastle.util.encoders.Hex;
-import org.junit.Assert;
-import org.junit.Test;
-
-import jcifs.pac.PACDecodingException;
-import jcifs.pac.PacMac;
-import jcifs.util.Hexdump;
 
 
 /**
@@ -144,136 +142,9 @@ public class PACTest {
     private static void testRC4HMac ( int usage, String data, String key, String expect ) throws GeneralSecurityException, PACDecodingException {
         byte[] keyb = Hex.decode(key);
         byte[] datab = data.getBytes(StandardCharsets.US_ASCII);
-        byte[] javaMac = sun.security.krb5.internal.crypto.ArcFourHmac.calculateChecksum(keyb, usage, datab, 0, datab.length);
         byte[] mac = PacMac.calculateMacArcfourHMACMD5(usage, makeKey(keyb, 23), datab);
-        checkBytes(javaMac, mac);
-        checkBytes(Hex.decode(expect), javaMac);
         checkBytes(Hex.decode(expect), mac);
     }
-
-
-    @Test
-    public void testPACAESChecksum () throws GeneralSecurityException {
-        String expect = "04EDBD6302A523C038391974";
-        String data = "050000000000000001000000C001000058000000000000000A0000001A00000018020000000000000C000000780"
-                + "0000038020000000000000600000010000000B0020000000000000700000014000000C00200000000000001100800CC"
-                + "CCCCCCB0010000000000000000020096E604FC8FC5D201FFFFFFFFFFFFFF7FFFFFFFFFFFFFFF7FF1B9E5D0C26ED001F"
-                + "1794FFB8B6FD001FFFFFFFFFFFFFF7F10001000040002001C001C0008000200000000000C0002000000000010000200"
-                + "000000001400020000000000180002004F0000004F04000001020000010000001C00020020000000000000000000000"
-                + "0000000000000000014001600200002000C000E00240002002800020000000000000000001002000000000000000000"
-                + "00000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000000"
-                + "000080000006D0062006500630068006C00650072000E000000000000000E0000004D006F007200690074007A002000"
-                + "42006500630068006C00650072000000000000000000000000000000000000000000000000000000000000000000000"
-                + "000000000000000000000000000000100000001020000070000000B000000000000000A00000041004400570032004B"
-                + "0038005400450053005400070000000000000006000000570032004B003800410044000400000001040000000000051"
-                + "5000000734F5CF10D97843CB34E535C0027A4FB8FC5D20110006D0062006500630068006C0065007200000000000000"
-                + "3A0010002800500000000000000000006D0062006500630068006C00650072004000770032006B003800610064002E0"
-                + "074006500730074002E00610067006E006F0033002E0065007500000000000000570032004B003800410044002E0054"
-                + "004500530054002E00410047004E004F0033002E00450055001000000000000000000000000000000076FFFFFF00000"
-                + "00000000000000000000000000000000000";
-        String key = "B3B88E34BF46A69FC7C3FA14A09A3C918FF9BE3183FCDB995BA64E5628735C93";
-
-        verifyAESMAC(17, expect, data, key);
-    }
-
-
-    public void testPACArcfourChecksum () throws GeneralSecurityException {
-        String expect = "8CA2EC211EF808390C9F0C3F32D0C4AF";
-        String data = "050000000000000001000000C001000058000000000000000A0000001A00000018020000000000000C000000780"
-                + "0000038020000000000000600000014000000B0020000000000000700000014000000C80200000000000001100800CC"
-                + "CCCCCCB00100000000000000000200EE68BFE58EC5D201FFFFFFFFFFFFFF7FFFFFFFFFFFFFFF7FF1B9E5D0C26ED001F"
-                + "1794FFB8B6FD001FFFFFFFFFFFFFF7F10001000040002001C001C0008000200000000000C0002000000000010000200"
-                + "000000001400020000000000180002004D0000004F04000001020000010000001C00020020000000000000000000000"
-                + "0000000000000000014001600200002000C000E00240002002800020000000000000000001002000000000000000000"
-                + "00000000000000000000000000000000000000000000000000000000000000000000000000000000000800000000000"
-                + "000080000006D0062006500630068006C00650072000E000000000000000E0000004D006F007200690074007A002000"
-                + "42006500630068006C00650072000000000000000000000000000000000000000000000000000000000000000000000"
-                + "000000000000000000000000000000100000001020000070000000B000000000000000A00000041004400570032004B"
-                + "0038005400450053005400070000000000000006000000570032004B003800410044000400000001040000000000051"
-                + "5000000734F5CF10D97843CB34E535C809B49E58EC5D20110006D0062006500630068006C0065007200000000000000"
-                + "3A0010002800500000000000000000006D0062006500630068006C00650072004000770032006B003800610064002E0"
-                + "074006500730074002E00610067006E006F0033002E0065007500000000000000570032004B003800410044002E0054"
-                + "004500530054002E00410047004E004F0033002E004500550076FFFFFF0000000000000000000000000000000000000"
-                + "00076FFFFFF0000000000000000000000000000000000000000";
-        String key = "D6C778819F31511EE36404BAB899BD74";
-
-        verifyArcfourHMAC(17, expect, data, key);
-    }
-
-
-    @Test
-    public void testAES128Checksum () throws GeneralSecurityException {
-        String data = "eight nine ten eleven twelve thirteen";
-        String key = "9062430C8CDA3388922E6D6A509F5B7A";
-        String expect = "01A4B088D45628F6946614E3";
-        verifyAESHMAC(3, expect, key, data.getBytes(StandardCharsets.US_ASCII));
-    }
-
-
-    @Test
-    public void testAES256Checksum () throws GeneralSecurityException {
-        String data = "fourteen";
-        String key = "B1AE4CD8462AFF1677053CC9279AAC30B796FB81CE21474DD3DDBCFEA4EC76D7";
-        String expect = "E08739E3279E2903EC8E3836";
-        verifyAESHMAC(4, expect, key, data.getBytes(StandardCharsets.US_ASCII));
-    }
-
-
-    /**
-     * @param expect
-     * @param data
-     * @param key
-     * @throws GeneralSecurityException
-     */
-    private static void verifyAESMAC ( int usage, String expect, String data, String key ) throws GeneralSecurityException {
-        verifyAESHMAC(usage, expect, key, Hex.decode(data));
-    }
-
-
-    private static void verifyArcfourHMAC ( int usage, String expect, String data, String key ) throws GeneralSecurityException {
-        verifyArcfourHMAC(usage, expect, key, Hex.decode(data));
-    }
-
-
-    /**
-     * @param expect
-     * @param key
-     * @param bytes
-     * @throws GeneralSecurityException
-     */
-    private static void verifyAESHMAC ( int usage, String expect, String key, byte[] bytes ) throws GeneralSecurityException {
-        byte[] keybytes = Hex.decode(key);
-        byte[] javaChecksum;
-        if ( keybytes.length == 16 ) {
-            javaChecksum = sun.security.krb5.internal.crypto.Aes128.calculateChecksum(keybytes, usage, bytes, 0, bytes.length);
-
-        }
-        else {
-            javaChecksum = sun.security.krb5.internal.crypto.Aes256.calculateChecksum(keybytes, usage, bytes, 0, bytes.length);
-        }
-
-        byte[] mac = PacMac.calculateMacHMACAES(usage, makeKey(keybytes, keybytes.length == 16 ? 17 : 18), bytes);
-        checkBytes(javaChecksum, mac);
-        checkBytes(Hex.decode(expect), mac);
-    }
-
-
-    private static void verifyArcfourHMAC ( int usage, String expect, String key, byte[] bytes ) throws GeneralSecurityException {
-        byte[] keybytes = Hex.decode(key);
-        byte[] javaChecksum;
-        if ( keybytes.length == 16 ) {
-            javaChecksum = sun.security.krb5.internal.crypto.ArcFourHmac.calculateChecksum(keybytes, usage, bytes, 0, bytes.length);
-
-        }
-        else {
-            javaChecksum = sun.security.krb5.internal.crypto.ArcFourHmac.calculateChecksum(keybytes, usage, bytes, 0, bytes.length);
-        }
-
-        byte[] mac = PacMac.calculateMacArcfourHMACMD5(usage, makeKey(keybytes, 23), bytes);
-        checkBytes(javaChecksum, mac);
-        checkBytes(Hex.decode(expect), mac);
-    }
-
 
     /**
      * @param keybytes

@@ -20,29 +20,13 @@
 package jcifs.spnego;
 
 
+import jcifs.util.Hexdump;
+import org.bouncycastle.asn1.*;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Enumeration;
-
-import org.bouncycastle.asn1.ASN1ApplicationSpecific;
-import org.bouncycastle.asn1.ASN1BitString;
-import org.bouncycastle.asn1.ASN1EncodableVector;
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Object;
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.asn1.ASN1OctetString;
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.ASN1TaggedObject;
-import org.bouncycastle.asn1.DERApplicationSpecific;
-import org.bouncycastle.asn1.DERBitString;
-import org.bouncycastle.asn1.DEROctetString;
-import org.bouncycastle.asn1.DEROutputStream;
-import org.bouncycastle.asn1.DERSequence;
-import org.bouncycastle.asn1.DERTaggedObject;
-
-import jcifs.util.Hexdump;
-
 
 /**
  * SPNEGO initial token
@@ -186,7 +170,7 @@ public class NegTokenInit extends SpnegoToken {
                     throw new IOException("Malformed SPNEGO token: tag " + tagged.getTagNo() + " " + tagged);
                 }
                 ASN1Sequence sequence = ASN1Sequence.getInstance(tagged, true);
-                Enumeration<ASN1Object> fields = sequence.getObjects();
+                Enumeration fields = sequence.getObjects();
                 while ( fields.hasMoreElements() ) {
                     tagged = (ASN1TaggedObject) fields.nextElement();
                     switch ( tagged.getTagNo() ) {
