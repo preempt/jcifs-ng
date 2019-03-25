@@ -64,7 +64,7 @@ public interface NameServiceClient {
      * @throws UnknownHostException
      *             if address cannot be resolved
      */
-    CompletableFuture<NetbiosAddress[]> getNbtAllByAddress (NetbiosAddress addr, Retrier<Boolean> retrier) throws UnknownHostException;
+    CompletableFuture<NetbiosAddress[]> getNbtAllByAddress (NetbiosAddress addr, Retrier<Boolean> retrier);
 
 
     /**
@@ -85,7 +85,7 @@ public interface NameServiceClient {
      * @throws java.net.UnknownHostException
      *             if there is an error resolving the name
      */
-    CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, int type, String scope, Retrier<Boolean> retrier ) throws UnknownHostException;
+    CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, int type, String scope, Retrier<Boolean> retrier );
 
 
     /**
@@ -100,7 +100,7 @@ public interface NameServiceClient {
      * @throws java.net.UnknownHostException
      *             if there is an error resolving the name
      */
-    CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, Retrier<Boolean> retrier ) throws UnknownHostException;
+    CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, Retrier<Boolean> retrier );
 
 
     /**
