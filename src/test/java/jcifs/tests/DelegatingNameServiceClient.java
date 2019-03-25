@@ -84,19 +84,19 @@ public class DelegatingNameServiceClient implements NameServiceClient {
 
 
     @Override
-    public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, Retrier<Boolean> retrier ) throws UnknownHostException {
+    public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, Retrier<Boolean> retrier ) {
         return this.nscl.getNbtAllByAddress(host, retrier);
     }
 
 
     @Override
-    public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, int type, String scope, Retrier<Boolean> retrier ) throws UnknownHostException {
+    public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, int type, String scope, Retrier<Boolean> retrier ) {
         return this.nscl.getNbtAllByAddress(host, type, scope, retrier);
     }
 
 
     @Override
-    public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( NetbiosAddress addr, Retrier<Boolean> retrier ) throws UnknownHostException {
+    public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( NetbiosAddress addr, Retrier<Boolean> retrier ) {
         return this.nscl.getNbtAllByAddress(addr, retrier);
     }
 

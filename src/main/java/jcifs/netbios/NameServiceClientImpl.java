@@ -815,7 +815,6 @@ public class NameServiceClientImpl implements Runnable, NameServiceClient {
         return getNbtByName(host, type, scope, null);
     }
 
-
     @Override
     public NbtAddress getNbtByName ( String host, int type, String scope, InetAddress svr ) throws UnknownHostException {
 
@@ -867,18 +866,33 @@ public class NameServiceClientImpl implements Runnable, NameServiceClient {
         return getAllByName(new Name(this.transportContext.getConfig(), host, type, scope), svr);
     }
 
-
     @Override
-    public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, Retrier<Boolean> retrier ) throws UnknownHostException {
-        return getNbtAllByAddress(getNbtByName(host, 0x00, null), retrier);
+    public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, Retrier<Boolean> retrier ) {
+        try
+        {
+            return getNbtAllByAddress(getNbtByName(host, 0x00, null), retrier);
+        }
+        catch (UnknownHostException ex)
+        {
+            CompletableFuture<NetbiosAddress[]> retVal = new CompletableFuture<>();
+            retVal.completeExceptionally(ex);
+            return retVal;
+        }
     }
 
-
     @Override
-    public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, int type, String scope, Retrier<Boolean> retrier ) throws UnknownHostException {
-        return getNbtAllByAddress(getNbtByName(host, type, scope), retrier);
+    public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress ( String host, int type, String scope, Retrier<Boolean> retrier ) {
+        try
+        {
+            return getNbtAllByAddress(getNbtByName(host, type, scope), retrier);
+        }
+        catch (UnknownHostException ex)
+        {
+            CompletableFuture<NetbiosAddress[]> retVal = new CompletableFuture<>();
+            retVal.completeExceptionally(ex);
+            return retVal;
+        }
     }
-
 
     @Override
     public CompletableFuture<NetbiosAddress[]> getNbtAllByAddress (NetbiosAddress addr, Retrier<Boolean> retrier) {
