@@ -18,26 +18,7 @@
 package jcifs.smb;
 
 
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.Locale;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import jcifs.CIFSContext;
-import jcifs.CIFSException;
-import jcifs.Configuration;
-import jcifs.DfsReferralData;
-import jcifs.RuntimeCIFSException;
-import jcifs.SmbConstants;
-import jcifs.SmbResourceLocator;
-import jcifs.SmbTreeHandle;
+import jcifs.*;
 import jcifs.internal.CommonServerMessageBlockRequest;
 import jcifs.internal.CommonServerMessageBlockResponse;
 import jcifs.internal.RequestWithPath;
@@ -46,6 +27,13 @@ import jcifs.internal.smb1.com.SmbComClose;
 import jcifs.internal.smb1.com.SmbComFindClose2;
 import jcifs.internal.smb1.trans.nt.NtTransQuerySecurityDesc;
 import jcifs.util.transport.TransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
@@ -494,7 +482,7 @@ class SmbTreeConnection {
      * @throws IOException
      */
     public synchronized SmbTreeHandleImpl connectHost ( SmbResourceLocatorImpl loc, String host, DfsReferralData referral ) throws IOException {
-        String targetDomain = null;
+        String targetDomain = this.ctx.getCredentials().getUserDomain();
         try ( SmbTreeImpl t = getTree() ) {
             if ( t != null ) {
                 if ( log.isDebugEnabled() ) {
