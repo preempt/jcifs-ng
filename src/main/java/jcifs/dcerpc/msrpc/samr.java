@@ -1,17 +1,17 @@
 package jcifs.dcerpc.msrpc;
 
 
-import javax.annotation.Generated;
-
 import jcifs.dcerpc.DcerpcMessage;
-import jcifs.dcerpc.rpc;
 import jcifs.dcerpc.ndr.NdrBuffer;
 import jcifs.dcerpc.ndr.NdrException;
 import jcifs.dcerpc.ndr.NdrObject;
+import jcifs.dcerpc.rpc;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import javax.annotation.Generated;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 
@@ -418,7 +418,7 @@ public class samr {
             this.highPart = _src.dec_ndr_long();
         }
 
-        public DateTime toDate()
+        public long toLong()
         {
             if (lowPart < 0)
                 lowPart = -lowPart;
@@ -426,10 +426,14 @@ public class samr {
                 highPart = -highPart;
             long ticksSince1601 = lowPart;
             ticksSince1601 |= ((long) highPart) << 32;
-            long MSSince1601 = ticksSince1601 / TICKS_PER_MILLISECOND;
 
-            DateTime date = AD_LDAP_START_DATE.plus(MSSince1601);
-            return date;
+            return ticksSince1601;
+        }
+
+        public Optional<DateTime> toDate()
+        {
+            long MSSince1601 = this.toLong() / TICKS_PER_MILLISECOND;
+            return MSSince1601 == 0 ? Optional.of(AD_LDAP_START_DATE.plus(MSSince1601)) : Optional.empty();
         }
     }
 
