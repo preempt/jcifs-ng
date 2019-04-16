@@ -433,7 +433,7 @@ public class samr {
         public Optional<DateTime> toDate()
         {
             long MSSince1601 = this.toLong() / TICKS_PER_MILLISECOND;
-            return MSSince1601 == 0 ? Optional.of(AD_LDAP_START_DATE.plus(MSSince1601)) : Optional.empty();
+            return MSSince1601 != 0 ? Optional.of(AD_LDAP_START_DATE.plus(MSSince1601)) : Optional.empty();
         }
     }
 
