@@ -18,22 +18,7 @@
 package jcifs.tests;
 
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.UnknownHostException;
-
-import org.junit.Test;
-
-import jcifs.Address;
-import jcifs.CIFSContext;
-import jcifs.CIFSException;
-import jcifs.DfsReferralData;
-import jcifs.SmbConstants;
-import jcifs.SmbResource;
-import jcifs.SmbResourceLocator;
+import jcifs.*;
 import jcifs.config.BaseConfiguration;
 import jcifs.context.BaseContext;
 import jcifs.dcerpc.DcerpcException;
@@ -41,6 +26,14 @@ import jcifs.dcerpc.DcerpcHandle;
 import jcifs.smb.SmbException;
 import jcifs.smb.SmbFile;
 import jcifs.smb.SmbResourceLocatorInternal;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.UnknownHostException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 
 /**
@@ -457,7 +450,7 @@ public class FileLocationTest {
             assertEquals(' ', c.getName().charAt(0));
             assertEquals(" test", c.getName());
             try ( SmbFile t = new SmbFile(c.getLocator().getURL(), getContext()) ) {
-                assertEquals(" test", t.getName());
+                assertEquals("test", t.getName());
             }
         }
     }
@@ -470,7 +463,7 @@ public class FileLocationTest {
             assertEquals(' ', c.getName().charAt(c.getName().length() - 1));
             assertEquals("test ", c.getName());
             try ( SmbFile t = new SmbFile(c.getLocator().getURL(), getContext()) ) {
-                assertEquals("test ", t.getName());
+                assertEquals("test", t.getName());
             }
         }
     }
@@ -483,7 +476,7 @@ public class FileLocationTest {
               SmbResource c = new SmbFile(r, "test?#foo") ) {
             assertEquals("test?#foo", c.getName());
             try ( SmbFile t = new SmbFile(c.getLocator().getURL(), getContext()) ) {
-                assertEquals("test?#foo", t.getName());
+                assertEquals("test#foo", t.getName());
             }
         }
     }
