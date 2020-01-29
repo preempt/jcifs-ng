@@ -41,7 +41,7 @@ public class samr {
     public static final int ACB_USE_DES_KEY_ONLY = 32768;
     public static final int ACB_DONT_REQUIRE_PREAUTH = 65536;
 
-    public static final int SamrServerAccessReadMask = 983103;
+    public static final int SamrServerAccessReadMask = 0x02000000;
 
     public static class SamrDomainAccessValues
     {
