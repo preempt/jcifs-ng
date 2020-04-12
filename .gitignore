@@ -20,4 +20,3 @@ build
 .gradle
 .repository
 .idea
-/lombok.config
